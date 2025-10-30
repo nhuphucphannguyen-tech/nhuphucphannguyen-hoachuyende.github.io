@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌱 Nhà nông thông thái - Lớp học xanh</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(160deg, #a5d6a7, #c8e6c9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    #game {
+      background: #fff;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    h1 { color: #2e7d32; }
+    button {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      margin-top: 15px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    button:hover { background-color: #388e3c; transform: scale(1.05); }
+    .hidden { display: none; }
+    .question { font-size: 18px; margin-bottom: 10px; }
+    .answers button {
+      display: block;
+      width: 100%;
+      margin: 6px 0;
+      background-color: #81c784;
+      font-weight: 500;
+    }
+    .answers button.correct { background-color: #66bb6a; }
+    .answers button.wrong { background-color: #ef5350; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+    }
+    th { background: #a5d6a7; }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <h1>🌿 Nhà nông thông thái 🌾</h1>
+
+    <div id="login-screen">
+      <p>Nhập tên của bạn để bắt đầu trò chơi:</p>
+      <input type="text" id="playerName" placeholder="Tên học sinh">
+      <button id="start-btn">Bắt đầu</button>
+    </div>
+
+    <div id="quiz-screen" class="hidden">
+      <h2 id="question"></h2>
+      <div id="answers" class="answers"></div>
+      <button id="next-btn" class="hidden">Câu tiếp theo ➡️</button>
+    </div>
+
+    <div id="result-screen" class="hidden">
+      <h2>🎉 Kết quả của bạn 🎉</h2>
+      <p id="score"></p>
+      <button id="view-leaderboard-btn">Xem bảng xếp hạng 🏆</button>
+      <button id="restart-btn">Chơi lại 🔁</button>
+    </div>
+
+    <div id="leaderboard-screen" class="hidden">
+      <h2>🏆 Bảng xếp hạng lớp học 🏆</h2>
+      <table id="leaderboard-table">
+        <tr><th>Hạng</th><th>Tên</th><th>Điểm</th></tr>
+      </table>
+      <button id="back-btn">⬅️ Quay lại</button>
+    </div>
+  </div>
+
+  <script>
+    // Danh sách câu hỏi phong phú (chọn ngẫu nhiên 5 câu)
+    const questionBank = [
+      {q: "Phân hữu cơ sinh học là gì?", a: [
+        {t: "Phân từ hóa chất tổng hợp", c: false},
+        {t: "Phân làm từ chất hữu cơ có vi sinh vật có ích", c: true},
+        {t: "Phân vô cơ cải tiến", c: false}
+      ]},
+      {q: "Ưu điểm của phân hữu cơ sinh học là gì?", a: [
+        {t: "Giúp cải tạo đất, tăng độ phì, an toàn môi trường", c: true},
+        {t: "Gây ô nhiễm đất và nước", c: false},
+        {t: "Làm cây chết nhanh", c: false}
+      ]},
+      {q: "Thành phần chính của phân hữu cơ sinh học là:", a: [
+        {t: "Chất hữu cơ, vi sinh vật có ích", c: true},
+        {t: "Chất hóa học, muối khoáng", c: false},
+        {t: "Kim loại nặng", c: false}
+      ]},
+      {q: "Khi nào nên bón phân hữu cơ sinh học?", a: [
+        {t: "Đầu vụ, khi cây còn nhỏ", c: true},
+        {t: "Giữa vụ", c: false},
+        {t: "Lúc thu hoạch", c: false}
+      ]},
+      {q: "Nhược điểm của phân hữu cơ sinh học là gì?", a: [
+        {t: "Khó bảo quản, dinh dưỡng thấp hơn phân hóa học", c: true},
+        {t: "Không có vi sinh vật", c: false},
+        {t: "Làm đất chai cứng", c: false}
+      ]},
+      {q: "Phân hữu cơ sinh học giúp cây như thế nào?", a: [
+        {t: "Giúp cây phát triển tự nhiên, bền vững", c: true},
+        {t: "Làm giảm năng suất", c: false},
+        {t: "Không ảnh hưởng", c: false}
+      ]},
+      {q: "Vi sinh vật trong phân hữu cơ có vai trò gì?", a: [
+        {t: "Phân giải chất hữu cơ, giúp cây hấp thu dễ hơn", c: true},
+        {t: "Gây hại cho cây trồng", c: false},
+        {t: "Không ảnh hưởng", c: false}
+      ]},
+      {q: "Nguyên liệu nào có thể dùng làm phân hữu cơ?", a: [
+        {t: "Vỏ rau củ, lá cây, rơm rạ", c: true},
+        {t: "Nhựa, kim loại", c: false},
+        {t: "Thủy tinh", c: false}
+      ]}
+    ];
+
+    let playerName = "";
+    let questions = [];
+    let currentIndex = 0;
+    let score = 0;
+
+    const loginScreen = document.getElementById("login-screen");
+    const quizScreen = document.getElementById("quiz-screen");
+    const resultScreen = document.getElementById("result-screen");
+    const leaderboardScreen = document.getElementById("leaderboard-screen");
+
+    const questionEl = document.getElementById("question");
+    const answersEl = document.getElementById("answers");
+    const nextBtn = document.getElementById("next-btn");
+    const scoreEl = document.getElementById("score");
+    const leaderboardTable = document.getElementById("leaderboard-table");
+
+    document.getElementById("start-btn").onclick = startGame;
+    nextBtn.onclick = nextQuestion;
+    document.getElementById("restart-btn").onclick = () => location.reload();
+    document.getElementById("view-leaderboard-btn").onclick = showLeaderboard;
+    document.getElementById("back-btn").onclick = () => {
+      leaderboardScreen.classList.add("hidden");
+      resultScreen.classList.remove("hidden");
+    };
+
+    function startGame() {
+      const nameInput = document.getElementById("playerName").value.trim();
+      if (!nameInput) return alert("Vui lòng nhập tên trước khi chơi!");
+      playerName = nameInput;
+      loginScreen.classList.add("hidden");
+      quizScreen.classList.remove("hidden");
+      questions = shuffle([...questionBank]).slice(0, 5);
+      currentIndex = 0;
+      score = 0;
+      showQuestion();
+    }
+
+    function showQuestion() {
+      nextBtn.classList.add("hidden");
+      answersEl.innerHTML = "";
+      const q = questions[currentIndex];
+      questionEl.textContent = "Câu " + (currentIndex + 1) + ": " + q.q;
+      q.a.forEach(ans => {
+        const btn = document.createElement("button");
+        btn.textContent = ans.t;
+        btn.onclick = () => selectAnswer(btn, ans.c);
+        answersEl.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(btn, correct) {
+      const buttons = answersEl.querySelectorAll("button");
+      buttons.forEach(b => b.disabled = true);
+      if (correct) {
+        btn.classList.add("correct");
+        score++;
+      } else {
+        btn.classList.add("wrong");
+      }
+      nextBtn.classList.remove("hidden");
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex < questions.length) showQuestion();
+      else showResult();
+    }
+
+    function showResult() {
+      quizScreen.classList.add("hidden");
+      resultScreen.classList.remove("hidden");
+      scoreEl.textContent = `Điểm của ${playerName}: ${score}/${questions.length}`;
+      saveToLeaderboard();
+    }
+
+    // Lưu bảng xếp hạng vào localStorage
+    function saveToLeaderboard() {
+      let leaderboard = JSON.parse(localStorage.getItem("compost_leaderboard") || "[]");
+      leaderboard.push({name: playerName, score});
+      leaderboard.sort((a, b) => b.score - a.score);
+      localStorage.setItem("compost_leaderboard", JSON.stringify(leaderboard));
+    }
+
+    function showLeaderboard() {
+      resultScreen.classList.add("hidden");
+      leaderboardScreen.classList.remove("hidden");
+      leaderboardTable.innerHTML = "<tr><th>Hạng</th><th>Tên</th><th>Điểm</th></tr>";
+      const data = JSON.parse(localStorage.getItem("compost_leaderboard") || "[]");
+      data.slice(0, 10).forEach((p, i) => {
+        const row = `<tr><td>${i + 1}</td><td>${p.name}</td><td>${p.score}</td></tr>`;
+        leaderboardTable.innerHTML += row;
+      });
+    }
+
+    // Hàm trộn câu hỏi ngẫu nhiên
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+  </script>
+</body>
+</html>
